@@ -160,7 +160,7 @@ def salted_crack_combinitions(start, end):
                
                 if a_digest == hash_salted_dict[h]:
                     r = open('result_salted_combinition/'+ a_digest, 'w')
-                    result = a_digest + "\t" + appended
+                    result = a_digest + "\t" + h + " : "   + curr_pass + other + " : "+ appended + "\n"
                     r.write(result)
                     r.close()
                     print "Found!---> ", result
