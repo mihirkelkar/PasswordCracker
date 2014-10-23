@@ -21,6 +21,17 @@ hash_salted = [\
             '12984:8bdd0dc96c9d83665eeb04eb4b8bcfb14d27a75cc308d320004f6410fd88f132',\
             ]
 
+
+
+hash_salted_dict = {}
+for h in hash_salted:
+    fields = h.partition(":")
+    hash_salted_dict[fields[0]] = fields[2]
+
+
+
+
+
 f = open('pass/rockyou.100000.txt','r')
 passwords = f.readlines()
 f.close()
@@ -96,8 +107,6 @@ def salted_crack_aps(start, end):
                 r.close()
                 print "Found!---> ", result
             
-            
-
             for digit in range(0,10):
                 a = salt + curr_pass + str(digit)
                 p = salt + str(digit) + curr_pass
@@ -124,6 +133,38 @@ def salted_crack_aps(start, end):
                     r.write(result)
                     r.close()
                     print "Found!---> ", result
+
+
+
+
+
+
+
+@app.task
+def salted_crack_combinitions(start, end):
+
+    for i in range(start, end):
+        curr_pass = passwords[i].strip("\n")
+        print curr_pass
+        for other in passwords:
+            other = other.strip("\n")
+           
+            for h in hash_salted_dict:
+                appended = h + curr_pass + other
+                
+                a_sha256 = SHA256.new(appended)
+
+                a_digest = a_sha256.hexdigest()
+               
+                #print appended 
+               
+                if a_digest == hash_salted_dict[h]:
+                    r = open('result_salted_combinition/'+ a_digest, 'w')
+                    result = a_digest + "\t" + appended
+                    r.write(result)
+                    r.close()
+                    print "Found!---> ", result
+
 
 
 
