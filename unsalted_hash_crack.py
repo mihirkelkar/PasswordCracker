@@ -21,12 +21,114 @@ hash_salted = [\
             '12984:8bdd0dc96c9d83665eeb04eb4b8bcfb14d27a75cc308d320004f6410fd88f132',\
             ]
 
+f = open('pass/rockyou.100000.txt','r')
+passwords = f.readlines()
+f.close()
+
+pass_dict = {}
+f = open('pass/rockyou.100000.hash','r')
+for line in f:
+    line = line.strip("\n")
+    fields = line.partition(" ")
+    pass_dict[fields[0]] = fields[2]
+f.close()
+
+
 
 @app.task
-def combinitions_in_range(start, end):
-    f = open('pass/rockyou.100000.txt','r')
-    passwords = f.readlines()
-    f.close()
+def unsalted_crack_dictionary():
+    for h in hash_nosalt:
+        if h in pass_dict:
+            r = open('result_nosalt_dict/'+h, 'w')
+            r.write(h + "\t" + pass_dict[h] + '\n')
+            r.close()
+
+
+@app.task
+def unsalted_crack_digits_ap(start,end):
+    for i in range(start, end):
+        curr_pass = passwords[i].strip("\n")
+        for digit in range(0,10):
+            a = curr_pass + str(digit)
+            p = str(digit) + curr_pass
+            
+            a_sha256 = SHA256.new(a)        
+            p_sha256 = SHA256.new(p) 
+            
+            a_digest = a_sha256.hexdigest()
+            p_digest = p_sha256.hexdigest()
+
+         
+            if a_digest in hash_nosalt:
+                r = open('result_crack_digits_ap/'+ a_digest, 'w')
+                result = a_digest + "\t" + a + "\n"
+                r.write(result)
+                r.close()
+                print "Found!---> ", result
+
+            if p_digest in hash_nosalt:
+                r = open('result_crack_digits_ap/'+ p_digest, 'w')
+                result = p_digest + "\t" + p + "\n"
+                r.write(result)
+                r.close()
+                print "Found!---> ", result
+        
+
+@app.task
+def salted_crack_aps(start, end):
+    for i in range (start, end):
+        curr_pass = passwords[i].strip("\n")
+        for h in hash_salted:
+            fields = h.partition(":")
+            salt = fields[0]
+            salted_pass = curr_pass + fields[0]
+            
+            #print salted_pass
+
+            sha256_s = SHA256.new(salted_pass)
+            
+            s_digest = sha256_s.hexdigest()
+            
+            if s_digest == fields[2]:
+                r = open('result_salted/'+ s_digest, 'w')
+                result = s_digest + "\t" + salt + " : " + curr_pass + "\n"
+                r.write(result)
+                r.close()
+                print "Found!---> ", result
+            
+            
+
+            for digit in range(0,10):
+                a = salt + curr_pass + str(digit)
+                p = salt + str(digit) + curr_pass
+
+                a_sha256 = SHA256.new(a)
+                p_sha256 = SHA256.new(p)
+
+                a_digest = a_sha256.hexdigest()
+                p_digest = p_sha256.hexdigest()
+            
+                #print a
+                #print p
+                
+                if a_digest == fields[2]:
+                    r = open('result_salted/'+ a_digest, 'w')
+                    result = a_digest + "\t" + salt + " : " + curr_pass + str(digit) + "\n"
+                    r.write(result)
+                    r.close()
+                    print "Found!---> ", result
+
+                if p_digest == fields[2]:
+                    r = open('result_salted/'+ p_digest, 'w')
+                    result = p_digest + "\t" + salt + " : " + str(digit) + curr_pass + "\n"
+                    r.write(result)
+                    r.close()
+                    print "Found!---> ", result
+
+
+
+@app.task
+def unsalted_crack_combinitions(start, end):
 
     for i in range(start, end):
         curr_pass = passwords[i].strip("\n")

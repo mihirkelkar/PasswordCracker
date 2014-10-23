@@ -6,7 +6,7 @@ def main():
     start = 0
     
     while start + 10 <= total:
-        combinitions_in_range.delay(start, start+10)
+        unsalted_crack_combinitions.delay(start, start+10)
         start = start + 10
 
 if __name__ == "__main__":
